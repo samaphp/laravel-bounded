@@ -7,6 +7,8 @@ namespace Samaphp\LaravelBounded;
 use Illuminate\Support\ServiceProvider;
 use Samaphp\LaravelBounded\Exceptions\InvalidConfigurationException;
 use Samaphp\LaravelBounded\Transaction\Transaction;
+use Samaphp\LaravelBounded\Validators\SingleActionControllerValidator;
+use Samaphp\LaravelBounded\Validators\TestParityValidator;
 use Samaphp\LaravelBounded\Validators\ZonePartitionValidator;
 
 final class BoundedServiceProvider extends ServiceProvider
@@ -19,8 +21,20 @@ final class BoundedServiceProvider extends ServiceProvider
 
         $this->app->singleton(Transaction::class);
 
+        $this->app
+            ->when([TestParityValidator::class, SingleActionControllerValidator::class])
+            ->needs('$basePath')
+            ->give(fn ($app) => $app->basePath());
+
+        $this->app
+            ->when([TestParityValidator::class, SingleActionControllerValidator::class])
+            ->needs('$ignoredScanPaths')
+            ->give(fn ($app) => $app['config']->get('bounded.ignore.paths', []));
+
         $this->app->tag([
             ZonePartitionValidator::class,
+            TestParityValidator::class,
+            SingleActionControllerValidator::class,
         ], self::VALIDATOR_TAG);
     }
 
