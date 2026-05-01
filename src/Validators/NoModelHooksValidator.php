@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Samaphp\LaravelBounded\Validators;
 
-use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * Anti-pattern detector: forbids overrides of Eloquent model lifecycle
@@ -65,7 +62,7 @@ final class NoModelHooksValidator implements ValidatorInterface
         $finder = new NodeFinder();
         $violations = [];
 
-        foreach ($this->iteratePhpFiles($absolutePath) as $file) {
+        foreach (PhpFileIterator::iterate($absolutePath) as $file) {
             $relative = substr($file, strlen($prefix));
             $contents = (string) file_get_contents($file);
             $ast = $parser->parse($contents) ?? [];
@@ -96,20 +93,5 @@ final class NoModelHooksValidator implements ValidatorInterface
             validator: $this->name(),
             violations: $violations,
         );
-    }
-
-    /**
-     * @return \Generator<int, string>
-     */
-    private function iteratePhpFiles(string $directory): \Generator
-    {
-        $iter = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
-        );
-        foreach ($iter as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
-                yield $file->getPathname();
-            }
-        }
     }
 }

@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Samaphp\LaravelBounded\Validators;
 
-use FilesystemIterator;
 use PhpParser\Node;
 use PhpParser\NodeFinder;
 use PhpParser\ParserFactory;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * Anti-pattern detector: forbids event listeners, observers, and
@@ -65,7 +62,7 @@ final class NoListenersValidator implements ValidatorInterface
                 continue;
             }
 
-            foreach ($this->iteratePhpFiles($absoluteDir) as $file) {
+            foreach (PhpFileIterator::iterate($absoluteDir) as $file) {
                 $relative = substr($file, strlen($prefix));
                 $violations[] = new Violation(
                     file: $relative,
@@ -84,7 +81,7 @@ final class NoListenersValidator implements ValidatorInterface
             $parser = (new ParserFactory)->createForNewestSupportedVersion();
             $finder = new NodeFinder();
 
-            foreach ($this->iteratePhpFiles($appPath) as $file) {
+            foreach (PhpFileIterator::iterate($appPath) as $file) {
                 $relative = substr($file, strlen($prefix));
 
                 // Avoid double-violation: app/Listeners and app/Observers are already covered above.
@@ -121,20 +118,5 @@ final class NoListenersValidator implements ValidatorInterface
             validator: $this->name(),
             violations: $violations,
         );
-    }
-
-    /**
-     * @return \Generator<int, string>
-     */
-    private function iteratePhpFiles(string $directory): \Generator
-    {
-        $iter = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
-        );
-        foreach ($iter as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
-                yield $file->getPathname();
-            }
-        }
     }
 }

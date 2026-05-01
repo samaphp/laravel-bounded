@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Samaphp\LaravelBounded\Validators;
 
-use FilesystemIterator;
 use LogicException;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 abstract class PathScanningValidator implements ValidatorInterface
 {
@@ -38,7 +35,7 @@ abstract class PathScanningValidator implements ValidatorInterface
                 continue;
             }
 
-            $files = $this->collectFiles($fullPath);
+            $files = PhpFileIterator::collect($fullPath);
 
             if ($files === []) {
                 $problems[] = $this->emptyPathProblem($relativePath);
@@ -71,27 +68,6 @@ abstract class PathScanningValidator implements ValidatorInterface
      * @return list<Violation>
      */
     abstract protected function checkFile(string $absolutePath): array;
-
-    /**
-     * @return list<string>
-     */
-    protected function collectFiles(string $absolutePath): array
-    {
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($absolutePath, FilesystemIterator::SKIP_DOTS),
-        );
-
-        $files = [];
-        foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getExtension() === 'php') {
-                $files[] = $file->getPathname();
-            }
-        }
-
-        sort($files);
-
-        return $files;
-    }
 
     protected function missingPathProblem(string $relativePath): Problem
     {
