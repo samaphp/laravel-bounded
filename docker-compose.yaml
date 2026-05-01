@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: "8.4"
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: tail -f /dev/null
+    restart: "no"
+
+  test-php83:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: "8.3"
+    working_dir: /app
+    volumes:
+      - .:/app
+    restart: "no"
+
+  test-php84:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: "8.4"
+    working_dir: /app
+    volumes:
+      - .:/app
+    restart: "no"
+
+  test-php85:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: "8.5"
+    working_dir: /app
+    volumes:
+      - .:/app
+    restart: "no"

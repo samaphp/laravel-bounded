@@ -1,0 +1,53 @@
+{
+    "name": "samaphp/laravel-bounded",
+    "description": "Boundary enforcement for Laravel — invokable controllers, transaction commit boundaries, log event keys, DTO discipline, facade zones, middleware foreclosure. Validators run at artisan boot; static rules ship for PHPStan and Deptrac.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "architecture",
+        "boundaries",
+        "phpstan",
+        "deptrac",
+        "invokable-controllers"
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/console": "^12.0 || ^13.0",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^10.0 || ^11.0",
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "qossmic/deptrac": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Samaphp\\LaravelBounded\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Samaphp\\LaravelBounded\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Samaphp\\LaravelBounded\\BoundedServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
