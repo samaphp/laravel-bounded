@@ -15,8 +15,10 @@ use Samaphp\LaravelBounded\Console\Generators\MakeRepositoryCommand;
 use Samaphp\LaravelBounded\Console\Generators\MakeServiceCommand;
 use Samaphp\LaravelBounded\Exceptions\InvalidConfigurationException;
 use Samaphp\LaravelBounded\Transaction\Transaction;
+use Samaphp\LaravelBounded\Validators\AutoloadFilesValidator;
 use Samaphp\LaravelBounded\Validators\NoListenersValidator;
 use Samaphp\LaravelBounded\Validators\NoModelHooksValidator;
+use Samaphp\LaravelBounded\Validators\RouteHandlerValidator;
 use Samaphp\LaravelBounded\Validators\SingleActionControllerValidator;
 use Samaphp\LaravelBounded\Validators\TestParityValidator;
 use Samaphp\LaravelBounded\Validators\ZonePartitionValidator;
@@ -48,9 +50,20 @@ final class BoundedServiceProvider extends ServiceProvider
             ->needs('$ignoredScanPaths')
             ->give(fn ($app) => $app['config']->get('bounded.ignore.paths', []));
 
+        $projectRootValidators = [
+            AutoloadFilesValidator::class,
+            RouteHandlerValidator::class,
+        ];
+
+        $this->app
+            ->when($projectRootValidators)
+            ->needs('$basePath')
+            ->give(fn ($app) => $app->basePath());
+
         $this->app->tag([
             ZonePartitionValidator::class,
             ...$basePathValidators,
+            ...$projectRootValidators,
         ], self::VALIDATOR_TAG);
     }
 

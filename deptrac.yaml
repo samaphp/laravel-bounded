@@ -117,7 +117,6 @@ deptrac:
             - Models
         Jobs:
             - Services
-            - Models
         Models:
             - Eloquent
         Providers: ~

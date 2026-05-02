@@ -36,3 +36,8 @@ services:
         class: Samaphp\LaravelBounded\PHPStan\Rules\LoggerEventKeyRule
         tags:
             - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\NoInlineValidatorRule
+        tags:
+            - phpstan.rules.rule

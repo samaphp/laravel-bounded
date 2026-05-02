@@ -99,7 +99,8 @@ abstract class PathScanningValidator implements ValidatorInterface
             kind: ProblemKind::ScanPathMissing,
             context: $relativePath,
             message: sprintf(
-                'Scan path [%s] does not exist. This package assumes Laravel\'s standard layout — see README\'s preconditions.',
+                'Path [%s] does not exist. If your project doesn\'t use this category yet (e.g. no console commands, no queued jobs), add [%s] to `ignore.paths` in config/bounded.php to suppress this. If your project has a non-standard layout, that\'s the other reason this fires.',
+                $relativePath,
                 $relativePath,
             ),
         );

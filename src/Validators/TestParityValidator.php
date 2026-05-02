@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Samaphp\LaravelBounded\Validators;
 
+use PhpParser\Node;
+use PhpParser\NodeFinder;
+use PhpParser\ParserFactory;
+
 /**
  * Validates that every HTTP/CLI/Queue entrypoint has a mirror test.
  *
@@ -11,6 +15,11 @@ namespace Samaphp\LaravelBounded\Validators;
  * Services, repositories, integrations are intentionally NOT in scope:
  * their tests are encouraged but not required as part of the test-parity
  * contract, because they are exercised transitively via entrypoint tests.
+ *
+ * Abstract classes are skipped — frameworks ship abstract base classes
+ * (e.g. `app/Http/Controllers/Controller.php`) and consumer code shouldn't
+ * be required to mirror-test them. Mirrors `SingleActionControllerValidator`'s
+ * abstract-skip behavior.
  */
 final class TestParityValidator extends PathScanningValidator
 {
@@ -42,6 +51,10 @@ final class TestParityValidator extends PathScanningValidator
             return [];
         }
 
+        if ($this->isAbstractClass($absolutePath)) {
+            return [];
+        }
+
         $withoutAppPrefix = substr($relativeFromBase, 4);
         $withoutExt = substr($withoutAppPrefix, 0, -4);
 
@@ -63,5 +76,18 @@ final class TestParityValidator extends PathScanningValidator
                 ),
             ),
         ];
+    }
+
+    private function isAbstractClass(string $absolutePath): bool
+    {
+        $parser = (new ParserFactory)->createForNewestSupportedVersion();
+        $contents = (string) file_get_contents($absolutePath);
+        $ast = $parser->parse($contents) ?? [];
+
+        $finder = new NodeFinder();
+        /** @var Node\Stmt\Class_|null $class */
+        $class = $finder->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
+
+        return $class !== null && $class->isAbstract();
     }
 }
