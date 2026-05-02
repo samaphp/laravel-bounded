@@ -17,10 +17,23 @@ use Samaphp\LaravelBounded\PHPStan\Helpers\ZoneClassifier;
  * zones (`app/Providers`, `app/Http/Middleware`) where business logic
  * does not live.
  *
+ * **One whitelisted exception: `Illuminate\Support\Facades\Log`.** Logging
+ * is necessarily ambient — every service that does meaningful work needs
+ * to log. Requiring constructor-injected `LoggerInterface` everywhere
+ * would force every service to declare a logger dependency it barely uses,
+ * for marginal gain. The carve-out is deliberate and the only one;
+ * everything else (Auth::, DB::, Cache::, Queue::, etc.) goes through
+ * constructor-injected contracts. The `LoggerEventKeyRule` separately
+ * enforces that Log calls include an `event` key.
+ *
  * @implements Rule<StaticCall>
  */
 final class FacadeZoneRule implements Rule
 {
+    private const WHITELISTED_FACADES = [
+        'Illuminate\\Support\\Facades\\Log',
+    ];
+
     public function __construct(
         private readonly ZoneClassifier $zones,
     ) {
@@ -49,6 +62,10 @@ final class FacadeZoneRule implements Rule
 
         $className = $node->class->toString();
         if (! str_starts_with($className, 'Illuminate\\Support\\Facades\\')) {
+            return [];
+        }
+
+        if (in_array($className, self::WHITELISTED_FACADES, true)) {
             return [];
         }
 

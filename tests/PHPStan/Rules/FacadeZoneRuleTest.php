@@ -33,4 +33,12 @@ final class FacadeZoneRuleTest extends RuleTestCase
     {
         $this->analyse([__DIR__ . '/data/app/Services/Order/ContractInjectingService.php'], []);
     }
+
+    public function testAllowsLogFacadeInService(): void
+    {
+        // Test-specific assertion: the rule's `WHITELISTED_FACADES` carve-out
+        // for Log must match the skill's documented exception. If anyone
+        // narrows the whitelist, this test surfaces the breakage.
+        $this->analyse([__DIR__ . '/data/app/Services/Order/LogFacadeService.php'], []);
+    }
 }
