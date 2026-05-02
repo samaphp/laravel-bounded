@@ -7,6 +7,15 @@
 #   (`bounded.middlewareServiceImport`), not here, so Middleware is intentionally
 #   not a Deptrac layer — keeping it out avoids blocking legitimate framework
 #   imports while leaving the rule that matters in place.
+#
+# Eloquent scope is intentionally NARROW (`Illuminate\\Database\\Eloquent\\*`).
+# It does NOT include `Illuminate\\Database\\Query\\*` (the lower-level query
+# builder) or `Illuminate\\Database\\Connection`. Direct raw-SQL via the `DB`
+# facade is caught separately by `FacadeZoneRule` (DB:: is not whitelisted).
+# Services importing `Illuminate\\Database\\Query\\Builder` directly is an
+# edge case neither rule catches today — broaden this regex to
+# `^Illuminate\\\\Database\\\\.*$` if you want full database-package
+# restriction in the consumer project.
 
 deptrac:
     paths:

@@ -16,6 +16,16 @@ use Samaphp\LaravelBounded\PHPStan\Helpers\ZoneClassifier;
  * signature inside `app/Services`. Services receive validated DTOs,
  * not raw Request objects; the Request lives only in controllers.
  *
+ * **Known edge case.** The rule matches the bare `Request` symbol to
+ * catch the common `use Illuminate\Http\Request;` import pattern. If a
+ * service file does `use App\DTO\Request;` and accepts `Request $param`,
+ * the rule will false-positive on the user's custom DTO. This is a
+ * heuristic limitation — proper fix requires PHPStan's name-resolution
+ * scope to get the resolved FQN. For now, avoid naming custom types
+ * `Request` in services, or rename them to something more specific
+ * (`OrderRequest`, `PaymentRequest`). Suffix-named DTOs like
+ * `CreateOrderRequest` are already handled correctly (see test).
+ *
  * @implements Rule<ClassMethod>
  */
 final class NoRequestInServiceSignaturesRule implements Rule
