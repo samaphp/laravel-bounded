@@ -1,0 +1,38 @@
+parameters:
+    bootstrapFiles:
+        - vendor/autoload.php
+
+services:
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Helpers\ZoneClassifier
+        autowired: true
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\NoHttpTypesInServicesRule
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\NoRequestInServiceSignaturesRule
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\MiddlewareServiceImportRule
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\FacadeZoneRule
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\BusChainBatchLiteralRule
+        tags:
+            - phpstan.rules.rule
+
+    -
+        class: Samaphp\LaravelBounded\PHPStan\Rules\LoggerEventKeyRule
+        tags:
+            - phpstan.rules.rule

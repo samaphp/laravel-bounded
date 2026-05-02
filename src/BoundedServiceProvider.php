@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded;
 
 use Illuminate\Support\ServiceProvider;
+use Samaphp\LaravelBounded\Console\ArchCheckCommand;
+use Samaphp\LaravelBounded\Console\ArchValidateCommand;
+use Samaphp\LaravelBounded\Console\CoverageTransactionsCommand;
+use Samaphp\LaravelBounded\Console\Generators\MakeActionCommand;
+use Samaphp\LaravelBounded\Console\Generators\MakeIntegrationCommand;
+use Samaphp\LaravelBounded\Console\Generators\MakeJobCommand;
+use Samaphp\LaravelBounded\Console\Generators\MakeRepositoryCommand;
+use Samaphp\LaravelBounded\Console\Generators\MakeServiceCommand;
 use Samaphp\LaravelBounded\Exceptions\InvalidConfigurationException;
 use Samaphp\LaravelBounded\Transaction\Transaction;
 use Samaphp\LaravelBounded\Validators\NoListenersValidator;
@@ -52,6 +60,17 @@ final class BoundedServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../config/bounded.php' => $this->app->configPath('bounded.php'),
             ], 'bounded-config');
+
+            $this->commands([
+                ArchValidateCommand::class,
+                ArchCheckCommand::class,
+                CoverageTransactionsCommand::class,
+                MakeActionCommand::class,
+                MakeServiceCommand::class,
+                MakeRepositoryCommand::class,
+                MakeIntegrationCommand::class,
+                MakeJobCommand::class,
+            ]);
         }
 
         $this->ensureZonesPartition();

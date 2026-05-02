@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Samaphp\LaravelBounded\Transaction;
 
+use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolverInterface;
 
 final class Transaction
@@ -30,8 +31,9 @@ final class Transaction
 
         $level = $cx->transactionLevel();
         if ($level > 0) {
+            $name = $cx instanceof Connection ? $cx->getName() : ($connection ?? 'default');
             throw TransactionAlreadyOpenException::forConnection(
-                (string) $cx->getName(),
+                (string) $name,
                 $level,
             );
         }

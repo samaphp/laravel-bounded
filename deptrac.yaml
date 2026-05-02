@@ -1,0 +1,92 @@
+deptrac:
+    paths:
+        - ./app
+
+    layers:
+        -
+            name: Controllers
+            collectors:
+                -
+                    type: directory
+                    value: app/Http/Controllers/.*
+
+        -
+            name: Middleware
+            collectors:
+                -
+                    type: directory
+                    value: app/Http/Middleware/.*
+
+        -
+            name: Services
+            collectors:
+                -
+                    type: directory
+                    value: app/Services/.*
+
+        -
+            name: Repositories
+            collectors:
+                -
+                    type: directory
+                    value: app/Repositories/.*
+
+        -
+            name: Queries
+            collectors:
+                -
+                    type: directory
+                    value: app/Queries/.*
+
+        -
+            name: Integrations
+            collectors:
+                -
+                    type: directory
+                    value: app/Integrations/.*
+
+        -
+            name: Models
+            collectors:
+                -
+                    type: directory
+                    value: app/Models/.*
+
+        -
+            name: Jobs
+            collectors:
+                -
+                    type: directory
+                    value: app/Jobs/.*
+
+        -
+            name: Providers
+            collectors:
+                -
+                    type: directory
+                    value: app/Providers/.*
+
+    ruleset:
+        Controllers:
+            - Services
+            - Models
+        Services:
+            - Repositories
+            - Queries
+            - Integrations
+            - Models
+            - Jobs
+        Repositories:
+            - Models
+        Queries:
+            - Models
+        Integrations:
+            - Models
+        Jobs:
+            - Services
+            - Models
+        Middleware: ~
+        Models: ~
+        Providers: ~
+
+    skip_violations: ~

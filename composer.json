@@ -34,7 +34,10 @@
     "autoload-dev": {
         "psr-4": {
             "Samaphp\\LaravelBounded\\Tests\\": "tests/"
-        }
+        },
+        "classmap": [
+            "tests/PHPStan/Rules/data/"
+        ]
     },
     "extra": {
         "laravel": {
