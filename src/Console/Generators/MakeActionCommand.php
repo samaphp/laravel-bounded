@@ -8,6 +8,8 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeActionCommand extends GeneratorCommand
 {
+    use RequiresDomainPath;
+
     protected $name = 'make:action';
 
     protected $description = 'Create a new invokable action controller (Bounded layout: app/Http/Controllers/{Domain}/{Name})';

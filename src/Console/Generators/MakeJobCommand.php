@@ -8,6 +8,8 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeJobCommand extends GeneratorCommand
 {
+    use RequiresDomainPath;
+
     // Renamed from `make:job` to avoid silently overriding Laravel's core
     // `make:job` command. Other Bounded generators (action/service/repository/
     // integration) don't collide with core; only this one needed the prefix.

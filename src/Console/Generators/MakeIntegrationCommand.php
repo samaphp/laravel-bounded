@@ -8,6 +8,8 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeIntegrationCommand extends GeneratorCommand
 {
+    use RequiresDomainPath;
+
     protected $name = 'make:integration';
 
     protected $description = 'Create a new third-party SDK wrapper (Bounded layout: app/Integrations/{Vendor}/{Name})';

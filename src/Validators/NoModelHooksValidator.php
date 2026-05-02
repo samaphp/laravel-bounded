@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded\Validators;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 
 /**
  * Anti-pattern detector: forbids overrides of Eloquent model lifecycle
@@ -58,17 +56,14 @@ final class NoModelHooksValidator implements ValidatorInterface
             return new ValidatorResult(validator: $this->name());
         }
 
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $finder = new NodeFinder();
         $violations = [];
 
         foreach (PhpFileIterator::iterate($absolutePath) as $file) {
             $relative = substr($file, strlen($prefix));
-            $contents = (string) file_get_contents($file);
-            $ast = $parser->parse($contents) ?? [];
+            $ast = PhpAstParser::parseFile($file);
 
             /** @var Node\Stmt\Class_|null $class */
-            $class = $finder->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
+            $class = PhpAstParser::finder()->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
             if ($class === null || $class->name === null) {
                 continue;
             }

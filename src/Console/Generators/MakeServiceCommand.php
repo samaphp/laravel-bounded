@@ -8,6 +8,8 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeServiceCommand extends GeneratorCommand
 {
+    use RequiresDomainPath;
+
     protected $name = 'make:service';
 
     protected $description = 'Create a new service class (Bounded layout: app/Services/{Domain}/{Name})';

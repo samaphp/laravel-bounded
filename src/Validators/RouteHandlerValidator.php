@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded\Validators;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 /**
@@ -97,18 +95,15 @@ final class RouteHandlerValidator implements ValidatorInterface
      */
     private function checkFile(string $absolutePath): array
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $contents = (string) file_get_contents($absolutePath);
-        $ast = $parser->parse($contents) ?? [];
+        $ast = PhpAstParser::parseFile($absolutePath);
 
-        $finder = new NodeFinder();
         $printer = new PrettyPrinter();
         $relativeFile = $this->relativeFromBase($absolutePath);
 
         $violations = [];
 
         /** @var list<Node\Expr\StaticCall|Node\Expr\MethodCall> $calls */
-        $calls = $finder->find($ast, static function (Node $node): bool {
+        $calls = PhpAstParser::finder()->find($ast, static function (Node $node): bool {
             return $node instanceof Node\Expr\StaticCall || $node instanceof Node\Expr\MethodCall;
         });
 
@@ -186,12 +181,34 @@ final class RouteHandlerValidator implements ValidatorInterface
             return true;
         }
 
-        // Plain string class name — 'App\Http\Controllers\Foo'
+        // Plain string class name — must be a fully-qualified namespaced
+        // identifier. Modern Laravel (8+) does not auto-namespace route
+        // handlers, so a non-namespaced string handler ('Show') would fail
+        // at boot anyway. Requiring '\' here makes the validator's promise
+        // match what it actually checks.
         if ($handler instanceof Node\Scalar\String_) {
-            return str_contains($handler->value, '\\') || ctype_upper(($handler->value[0] ?? ''));
+            return $this->looksLikeFqcn($handler->value);
         }
 
         return false;
+    }
+
+    private function looksLikeFqcn(string $value): bool
+    {
+        if (! str_contains($value, '\\')) {
+            return false;
+        }
+
+        // Each segment must be a valid PHP identifier (no method-suffix
+        // forms like 'App\Foo@method' — those are pre-Laravel-8 style
+        // and explicitly removed).
+        foreach (explode('\\', ltrim($value, '\\')) as $segment) {
+            if ($segment === '' || preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $segment) !== 1) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function relativeFromBase(string $absolutePath): string

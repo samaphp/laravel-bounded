@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded\Validators;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 
 /**
  * Validates single-action controller invariants under app/Http/Controllers.
@@ -41,13 +39,10 @@ final class SingleActionControllerValidator extends PathScanningValidator
      */
     protected function checkFile(string $absolutePath): array
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $contents = (string) file_get_contents($absolutePath);
-        $ast = $parser->parse($contents) ?? [];
+        $ast = PhpAstParser::parseFile($absolutePath);
 
-        $finder = new NodeFinder();
         /** @var Node\Stmt\Class_|null $class */
-        $class = $finder->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
+        $class = PhpAstParser::finder()->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
 
         if ($class === null || $class->isAbstract() || $class->name === null) {
             return [];

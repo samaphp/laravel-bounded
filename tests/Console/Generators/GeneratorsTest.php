@@ -37,8 +37,9 @@ it('make:bounded-job is registered', function () {
     expect(\Illuminate\Support\Facades\Artisan::all())->toHaveKey('make:bounded-job');
 });
 
-it('make:action creates a final invokable controller in app/Http/Controllers', function () {
-    $name = 'TestActionGen' . uniqid();
+it('make:action creates a final invokable controller under Http/Controllers/{Domain}', function () {
+    $className = 'ShowGen' . uniqid();
+    $name = 'Order/' . $className;
     $expected = $this->app->basePath('app/Http/Controllers/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
@@ -47,13 +48,14 @@ it('make:action creates a final invokable controller in app/Http/Controllers', f
     expect(is_file($expected))->toBeTrue();
     $contents = file_get_contents($expected);
     expect($contents)
-        ->toContain('final class ' . $name)
+        ->toContain('final class ' . $className)
         ->toContain('public function __invoke')
-        ->toContain('namespace App\\Http\\Controllers');
+        ->toContain('namespace App\\Http\\Controllers\\Order');
 });
 
-it('make:service creates a final service in app/Services', function () {
-    $name = 'TestServiceGen' . uniqid();
+it('make:service creates a final service under Services/{Domain}', function () {
+    $className = 'CreateOrderGen' . uniqid();
+    $name = 'Order/' . $className;
     $expected = $this->app->basePath('app/Services/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
@@ -62,12 +64,13 @@ it('make:service creates a final service in app/Services', function () {
     expect(is_file($expected))->toBeTrue();
     $contents = file_get_contents($expected);
     expect($contents)
-        ->toContain('final class ' . $name)
-        ->toContain('namespace App\\Services');
+        ->toContain('final class ' . $className)
+        ->toContain('namespace App\\Services\\Order');
 });
 
-it('make:repository creates a final repository in app/Repositories', function () {
-    $name = 'TestRepoGen' . uniqid();
+it('make:repository creates a final repository under Repositories/{Domain}', function () {
+    $className = 'OrderRepositoryGen' . uniqid();
+    $name = 'Order/' . $className;
     $expected = $this->app->basePath('app/Repositories/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
@@ -76,14 +79,14 @@ it('make:repository creates a final repository in app/Repositories', function ()
     expect(is_file($expected))->toBeTrue();
     $contents = file_get_contents($expected);
     expect($contents)
-        ->toContain('final class ' . $name)
-        ->toContain('namespace App\\Repositories');
+        ->toContain('final class ' . $className)
+        ->toContain('namespace App\\Repositories\\Order');
 });
 
-it('make:integration creates a final integration with vendor namespace', function () {
-    $name = 'Stripe/PaymentGatewayGen' . uniqid();
-    $className = 'PaymentGatewayGen' . substr($name, strpos($name, 'Gen') + 3);
-    $expected = $this->app->basePath('app/Integrations/' . str_replace('/', '/', $name) . '.php');
+it('make:integration creates a final integration under Integrations/{Vendor}', function () {
+    $className = 'PaymentGatewayGen' . uniqid();
+    $name = 'Stripe/' . $className;
+    $expected = $this->app->basePath('app/Integrations/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
     $this->artisan('make:integration', ['name' => $name])->assertExitCode(0);
@@ -92,11 +95,12 @@ it('make:integration creates a final integration with vendor namespace', functio
     $contents = file_get_contents($expected);
     expect($contents)
         ->toContain('namespace App\\Integrations\\Stripe')
-        ->toContain('final class ');
+        ->toContain('final class ' . $className);
 });
 
-it('make:bounded-job creates a final queueable job in app/Jobs', function () {
-    $name = 'TestJobGen' . uniqid();
+it('make:bounded-job creates a final queueable job under Jobs/{Domain}', function () {
+    $className = 'SendOrderEmailGen' . uniqid();
+    $name = 'Email/' . $className;
     $expected = $this->app->basePath('app/Jobs/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
@@ -105,23 +109,14 @@ it('make:bounded-job creates a final queueable job in app/Jobs', function () {
     expect(is_file($expected))->toBeTrue();
     $contents = file_get_contents($expected);
     expect($contents)
-        ->toContain('final class ' . $name)
+        ->toContain('final class ' . $className)
         ->toContain('implements ShouldQueue')
         ->toContain('public function handle')
-        ->toContain('namespace App\\Jobs');
+        ->toContain('namespace App\\Jobs\\Email');
 });
 
-it('make:action supports subdirectory namespace', function () {
-    $name = 'Order/ShowGen' . uniqid();
-    $className = explode('/', $name)[1];
-    $expected = $this->app->basePath('app/Http/Controllers/' . $name . '.php');
-    $this->createdFiles[] = $expected;
-
-    $this->artisan('make:action', ['name' => $name])->assertExitCode(0);
-
-    expect(is_file($expected))->toBeTrue();
-    $contents = file_get_contents($expected);
-    expect($contents)
-        ->toContain('namespace App\\Http\\Controllers\\Order')
-        ->toContain('final class ' . $className);
+it('rejects bare names without a Domain/Vendor segment', function () {
+    foreach (['make:action', 'make:service', 'make:repository', 'make:integration', 'make:bounded-job'] as $command) {
+        $this->artisan($command, ['name' => 'BareName'])->assertExitCode(1);
+    }
 });

@@ -8,9 +8,11 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeRepositoryCommand extends GeneratorCommand
 {
+    use RequiresDomainPath;
+
     protected $name = 'make:repository';
 
-    protected $description = 'Create a new repository class (Bounded layout: app/Repositories/{Name} — Eloquent allowed in this zone)';
+    protected $description = 'Create a new repository class (Bounded layout: app/Repositories/{Domain}/{Name}Repository — Eloquent allowed in this zone)';
 
     protected $type = 'Repository';
 

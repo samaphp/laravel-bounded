@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded\Validators;
 
 use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\ParserFactory;
 
 /**
  * Anti-pattern detector: forbids event listeners, observers, and
@@ -78,9 +76,6 @@ final class NoListenersValidator implements ValidatorInterface
         // Rule 3: any class under app/ implementing EventSubscriberInterface.
         $appPath = $prefix . 'app';
         if (! in_array('app', $this->ignoredScanPaths, true) && is_dir($appPath)) {
-            $parser = (new ParserFactory)->createForNewestSupportedVersion();
-            $finder = new NodeFinder();
-
             foreach (PhpFileIterator::iterate($appPath) as $file) {
                 $relative = substr($file, strlen($prefix));
 
@@ -89,11 +84,10 @@ final class NoListenersValidator implements ValidatorInterface
                     continue;
                 }
 
-                $contents = (string) file_get_contents($file);
-                $ast = $parser->parse($contents) ?? [];
+                $ast = PhpAstParser::parseFile($file);
 
                 /** @var Node\Stmt\Class_|null $class */
-                $class = $finder->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
+                $class = PhpAstParser::finder()->findFirstInstanceOf($ast, Node\Stmt\Class_::class);
                 if ($class === null || $class->name === null) {
                     continue;
                 }

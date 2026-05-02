@@ -27,16 +27,18 @@ it('arch:validate exits 1 when path scanners hit missing dirs without ignore', f
         ->assertExitCode(1);
 });
 
-it('--strict overrides the configured ignore list', function () {
+it('--strict still respects ignore.paths for ScanPathMissing structural problems', function () {
+    // Ignored paths that don't exist → no ScanPathMissing in either mode.
+    // `ignore.paths` is the consumer's declaration that "this category isn't
+    // applicable to my project," and that statement is unchanged by --strict.
+    // (--strict only bypasses ignore for file-level violations — see the
+    // PathScanningValidator unit tests.)
     config()->set('bounded.ignore.paths', [
         'app/Http/Controllers',
         'app/Console/Commands',
         'app/Jobs',
     ]);
 
-    // Without --strict: ignores apply, no missing-path problems → exit 0.
     $this->artisan('arch:validate')->assertExitCode(0);
-
-    // With --strict: ignores bypassed, scan paths missing → exit 1.
-    $this->artisan('arch:validate', ['--strict' => true])->assertExitCode(1);
+    $this->artisan('arch:validate', ['--strict' => true])->assertExitCode(0);
 });

@@ -136,6 +136,30 @@ it('handles Route::match (handler is third arg)', function (): void {
     expect($result->violations())->toHaveCount(1);
 });
 
+it('flags a non-namespaced string handler', function (): void {
+    writeRoutes($this->fixturePath, <<<'PHP'
+        <?php
+        use Illuminate\Support\Facades\Route;
+        Route::get('/x', 'Show');
+        PHP);
+
+    $result = (new RouteHandlerValidator($this->fixturePath))->validate();
+
+    expect($result->passed())->toBeFalse();
+});
+
+it('flags the pre-Laravel-8 Controller@method string form', function (): void {
+    writeRoutes($this->fixturePath, <<<'PHP'
+        <?php
+        use Illuminate\Support\Facades\Route;
+        Route::get('/x', 'App\\Http\\Controllers\\Order\\Show@show');
+        PHP);
+
+    $result = (new RouteHandlerValidator($this->fixturePath))->validate();
+
+    expect($result->passed())->toBeFalse();
+});
+
 it('exposes its name on validator and result', function (): void {
     $validator = new RouteHandlerValidator($this->fixturePath);
 
