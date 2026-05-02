@@ -89,7 +89,7 @@ deptrac:
             name: Eloquent
             collectors:
                 -
-                    type: classlike
+                    type: classLike
                     value: ^Illuminate\\Database\\Eloquent\\.*$
 
     ruleset:

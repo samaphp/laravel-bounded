@@ -157,3 +157,44 @@ it('exposes its name on both the validator and the result', function () {
     expect($validator->name())->toBe('TestParity');
     expect($validator->validate()->validator)->toBe('TestParity');
 });
+
+it('in strict mode, still suppresses ScanPathMissing for ignored paths that do not exist', function () {
+    mkdir($this->fixturePath . '/app/Http/Controllers', recursive: true);
+    mkdir($this->fixturePath . '/tests/Feature/Http/Controllers', recursive: true);
+    file_put_contents($this->fixturePath . '/app/Http/Controllers/Home.php', '<?php class Home {}');
+    file_put_contents($this->fixturePath . '/tests/Feature/Http/Controllers/HomeTest.php', '<?php');
+
+    $validator = new TestParityValidator(
+        $this->fixturePath,
+        ignoredScanPaths: ['app/Console/Commands', 'app/Jobs'],
+    );
+    $validator->setStrict(true);
+
+    expect($validator->validate()->passed())->toBeTrue();
+});
+
+it('in strict mode, still scans an ignored path for violations if files are present', function () {
+    mkdir($this->fixturePath . '/app/Http/Controllers', recursive: true);
+    mkdir($this->fixturePath . '/app/Jobs', recursive: true);
+    mkdir($this->fixturePath . '/tests/Feature/Http/Controllers', recursive: true);
+    file_put_contents($this->fixturePath . '/app/Http/Controllers/Home.php', '<?php class Home {}');
+    file_put_contents($this->fixturePath . '/tests/Feature/Http/Controllers/HomeTest.php', '<?php');
+    file_put_contents($this->fixturePath . '/app/Jobs/Hidden.php', '<?php class Hidden {}');
+
+    $validator = new TestParityValidator(
+        $this->fixturePath,
+        ignoredScanPaths: ['app/Jobs', 'app/Console/Commands'],
+    );
+
+    expect($validator->validate()->passed())
+        ->toBeTrue()
+        ->and($validator->validate()->violations())
+        ->toBeEmpty();
+
+    $validator->setStrict(true);
+    $strictResult = $validator->validate();
+
+    expect($strictResult->passed())->toBeFalse();
+    $files = array_map(static fn ($v) => $v->file, $strictResult->violations());
+    expect($files)->toContain('app/Jobs/Hidden.php');
+});

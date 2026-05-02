@@ -5,30 +5,30 @@ declare(strict_types=1);
 namespace Samaphp\LaravelBounded\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Samaphp\LaravelBounded\BoundedServiceProvider;
+use Samaphp\LaravelBounded\Validators\PathScanningValidator;
 use Samaphp\LaravelBounded\Validators\ValidatorInterface;
 use Samaphp\LaravelBounded\Validators\ValidatorResult;
 
 final class ArchValidateCommand extends Command
 {
-    protected $signature = 'arch:validate {--strict : Bypass ignore lists from config/bounded.php}';
+    protected $signature = 'arch:validate {--strict : Bypass ignore lists for file-level violations}';
 
     protected $description = 'Run all Bounded validators against the application code.';
 
-    public function handle(ConfigRepository $config): int
+    public function handle(): int
     {
-        if ($this->option('strict')) {
-            // Clear the ignore list before resolving validators. The
-            // contextual binding in BoundedServiceProvider reads
-            // `bounded.ignore.paths` at resolution time, so this gives
-            // every validator an empty ignoredScanPaths.
-            $config->set('bounded.ignore.paths', []);
-        }
-
         /** @var iterable<ValidatorInterface> $validators */
         $validators = $this->laravel->tagged(BoundedServiceProvider::VALIDATOR_TAG);
         $validators = iterator_to_array($validators);
+
+        if ($this->option('strict')) {
+            foreach ($validators as $validator) {
+                if ($validator instanceof PathScanningValidator) {
+                    $validator->setStrict(true);
+                }
+            }
+        }
 
         $totalViolations = 0;
         $totalProblems = 0;

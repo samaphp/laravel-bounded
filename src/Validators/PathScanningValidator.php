@@ -8,13 +8,31 @@ use LogicException;
 
 abstract class PathScanningValidator implements ValidatorInterface
 {
+    private bool $strict = false;
+
     /**
-     * @param  list<string>  $ignoredScanPaths  Scan paths to skip silently — sourced from config/bounded.php's `ignore.paths`.
+     * @param  list<string>  $ignoredScanPaths  Scan paths to skip — sourced from config/bounded.php's `ignore.paths`.
      */
     public function __construct(
         protected readonly string $basePath,
         protected readonly array $ignoredScanPaths = [],
     ) {
+    }
+
+    /**
+     * Toggle strict mode.
+     *
+     * In strict mode, ignored paths are still scanned for file-level
+     * violations if they exist (so devs can't hide violations by adding
+     * a path to ignore.paths). But the structural problems
+     * ScanPathMissing / ScanPathEmpty are still suppressed for ignored
+     * paths — `ignore.paths` legitimately says "this category isn't
+     * applicable to my project," and that statement is unchanged by
+     * strict mode.
+     */
+    public function setStrict(bool $strict): void
+    {
+        $this->strict = $strict;
     }
 
     public function validate(): ValidatorResult
@@ -23,14 +41,18 @@ abstract class PathScanningValidator implements ValidatorInterface
         $violations = [];
 
         foreach ($this->scanPaths() as $relativePath) {
-            if (in_array($relativePath, $this->ignoredScanPaths, true)) {
+            $isIgnored = in_array($relativePath, $this->ignoredScanPaths, true);
+
+            if ($isIgnored && ! $this->strict) {
                 continue;
             }
 
             $fullPath = $this->absolutePath($relativePath);
 
             if (! is_dir($fullPath)) {
-                $problems[] = $this->missingPathProblem($relativePath);
+                if (! $isIgnored) {
+                    $problems[] = $this->missingPathProblem($relativePath);
+                }
 
                 continue;
             }
@@ -38,7 +60,9 @@ abstract class PathScanningValidator implements ValidatorInterface
             $files = PhpFileIterator::collect($fullPath);
 
             if ($files === []) {
-                $problems[] = $this->emptyPathProblem($relativePath);
+                if (! $isIgnored) {
+                    $problems[] = $this->emptyPathProblem($relativePath);
+                }
 
                 continue;
             }
