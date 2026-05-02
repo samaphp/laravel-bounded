@@ -1,8 +1,6 @@
 # laravel-bounded
 
-An opinionated guardrail layer for Laravel: architectural conventions enforced as mechanical CI gates. The build either passes or the architecture is wrong. Runtime validators, PHPStan rules, and Deptrac config fail the build when conventions drift.
-
-Built for codebases where humans and AI agents both write code, and PR review is the bottleneck.
+An opinionated guardrail layer for Laravel: architectural conventions enforced as mechanical CI gates. The build either passes or the architecture is wrong. Runtime validators, PHPStan rules, and Deptrac config fail the build when conventions drift. Built for codebases where humans and AI agents both write code, and PR review is the bottleneck.
 
 ## What this solves
 
@@ -24,12 +22,13 @@ Reject this package if any of these are dealbreakers:
 
 **Boot-time validators** (run on `arch:validate`):
 
-- **Zone partitioning** — `app/` paths assigned to `logic`, `framework_bridge`, or `repository` zones; partition enforced at boot.
-- **Single-action invokable controllers** — `final`, one `__invoke` per file, no `Controller` suffix.
-- **Test parity** — every controller / command / job has a mirror test at the expected path. Skips abstract classes.
-- **No listeners / observers / model hooks** — no files in `app/Listeners` or `app/Observers`, no `boot`/`booted` overrides on Models, no `EventSubscriberInterface` implementations anywhere under `app/`.
-- **No `autoload.files`** — `composer.json`'s `autoload.files` and `autoload-dev.files` must be empty. Helpers files escape every layer; shared logic goes in a class under a layer.
-- **Route handlers must be invokable class strings** — closures, arrow functions, and `[Controller::class, 'method']` tuples in `routes/*.php` fail the build. `Route::redirect` / `Route::view` / `Route::permanentRedirect` (no-handler forms) are allowed.
+- **`ZonePartition`** — `app/` paths assigned to `logic`, `framework_bridge`, or `repository` zones. Boot fails if any path is in multiple zones.
+- **`SingleActionController`** (`app/Http/Controllers`) — each concrete controller must be `final`, have `__invoke`, no other public methods, no `Controller` suffix. Skips abstract classes.
+- **`TestParity`** (`app/Http/Controllers`, `app/Console/Commands`, `app/Jobs`) — each file has a mirror test under `tests/Feature/` or `tests/Unit/`. Skips abstract classes. Fails on missing/empty scan paths.
+- **`NoListeners`** (`app/Listeners`, `app/Observers`, all of `app/`) — no files in those directories; no class anywhere implements `EventSubscriberInterface`. Silent on missing/empty (no listeners is success).
+- **`NoModelHooks`** (`app/Models`) — no model overrides `boot()` or `booted()`. Silent on missing/empty.
+- **`AutoloadFiles`** (`composer.json`) — fails if `autoload.files` or `autoload-dev.files` is non-empty. Helpers files escape every layer; shared logic goes in a class under a layer.
+- **`RouteHandler`** (`routes/*.php`) — each `Route::*(verb)` call must use a class-string handler (`Foo::class` or namespaced FQCN string). Closures, arrow functions, and `[Controller::class, 'method']` tuples fail. `Route::redirect` / `Route::view` / `Route::permanentRedirect` (no-handler forms) are allowed.
 
 **PHPStan rules** (registered via `extension.neon`):
 
@@ -91,7 +90,7 @@ return [
 ];
 ```
 
-**Zones partition.** A path appears in exactly one zone, never two. The boot validator throws `InvalidConfigurationException` if any path is in multiple zones.
+**Zones partition.** A path appears in exactly one zone. Boot fails (`InvalidConfigurationException`) on overlap.
 
 ## Generators
 
@@ -114,8 +113,6 @@ php artisan arch:validate --strict     # bypass ignore.paths for code violations
 
 `ignore.paths` declares "this category isn't applicable to my project." That declaration holds in strict mode. Strict only bypasses ignore for **file-level violations** — so a path can't be used to permanently silence broken code.
 
-Output groups violations and problems per validator, with per-line locations for code violations and per-context messages for config/structural problems.
-
 ## Full check chain
 
 ```bash
@@ -123,7 +120,7 @@ php artisan arch:check                 # arch:validate --strict → phpstan → 
 php artisan arch:check --skip-coverage # skip the transaction-coverage gate
 ```
 
-Add to consumer's `composer.json` for one-command invocation:
+In `composer.json`:
 
 ```json
 {
@@ -133,37 +130,25 @@ Add to consumer's `composer.json` for one-command invocation:
 }
 ```
 
-Then: `composer arch:check`.
-
 ## PHPStan extension
 
-Add to consumer's `phpstan.neon`:
+In `phpstan.neon`:
 
 ```neon
 includes:
     - vendor/samaphp/laravel-bounded/extension.neon
 ```
 
-The extension ships seven rules registered via `phpstan.rules.rule`:
-
-- `bounded.facadeZone` — facades only in framework_bridge zones
-- `bounded.busChainBatchLiteral` — `Bus::chain`/`batch` args must be array literals
-- `bounded.loggerEventKey` — `Log::*` calls must have `event` key in context
-- `bounded.middlewareServiceImport` — middleware can't import from logic zones
-- `bounded.noHttpTypesInServices` — services/repositories can't return HTTP types
-- `bounded.noRequestInServiceSignatures` — services can't accept `Request` in signatures
-- `bounded.noInlineValidator` — `Validator::make` and `validator(...)` forbidden in logic zones; validation belongs in Form Requests
+Rules registered via `phpstan.rules.rule` are listed under [What it enforces](#what-it-enforces).
 
 ## Deptrac config
-
-Copy `vendor/samaphp/laravel-bounded/deptrac.yaml` to project root, customize layers as needed:
 
 ```bash
 cp vendor/samaphp/laravel-bounded/deptrac.yaml deptrac.yaml
 vendor/bin/deptrac analyse
 ```
 
-The shipped config defines 10 layers (Controllers, Commands, Services, Repositories, Queries, Integrations, Models, Jobs, Providers, plus a virtual `Eloquent` layer that restricts ORM imports to Repositories / Queries / Models) with allowed dependencies per the rule chain. **Jobs may depend on Services only — not Models.** Middleware boundaries are enforced by the `bounded.middlewareServiceImport` PHPStan rule, not Deptrac.
+Layers and allowed dependencies are listed under [What it enforces](#what-it-enforces). Middleware boundaries are enforced by the `bounded.middlewareServiceImport` PHPStan rule, not Deptrac.
 
 ## Transaction service
 
@@ -198,18 +183,6 @@ php artisan arch:coverage:transactions
 The gate scans `app/` for `Transaction::run` call sites, parses the Clover report, and asserts non-zero coverage on every call site. Fails with the list of uncovered lines if any. Requires `pcov` (recommended) or `xdebug` to generate the coverage report.
 
 **Detection convention.** The gate matches two source patterns: `Transaction::run(` (static) and `->transaction->run(` (instance via property). The instance pattern requires the property to be named exactly `$transaction` — if you inject the service as `Transaction $tx` and call `$this->tx->run(...)`, the gate will miss it. Use `$transaction` as the property name.
-
-## Validators reference
-
-| Validator | Scope | Behavior |
-|---|---|---|
-| `ZonePartition` | `config/bounded.php`'s `zones` | Fails boot if any path is in multiple zones (config-level). |
-| `TestParity` | `app/Http/Controllers`, `app/Console/Commands`, `app/Jobs` | Each file must have a mirror test under `tests/Feature/` or `tests/Unit/`. Skips abstract classes. Fails on missing/empty scan paths. |
-| `SingleActionController` | `app/Http/Controllers` | Each concrete controller must be `final`, have `__invoke`, no other public methods, no `Controller` suffix. Skips abstract classes. |
-| `NoListeners` | `app/Listeners`, `app/Observers`, all of `app/` | No files in those directories; no class anywhere implements `EventSubscriberInterface`. Silent on missing/empty. |
-| `NoModelHooks` | `app/Models` | No model overrides `boot()` or `booted()`. Silent on missing/empty. |
-| `AutoloadFiles` | `composer.json` | Fails if `autoload.files` or `autoload-dev.files` is non-empty. |
-| `RouteHandler` | `routes/*.php` | Each `Route::*(verb)` call must use a class-string handler (`Foo::class` or namespaced FQCN string). Closures, arrow functions, and `[Controller::class, 'method']` tuples fail. `Route::redirect`/`view`/`permanentRedirect` allowed. |
 
 ## Contributing / package dev
 
