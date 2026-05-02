@@ -6,6 +6,19 @@ namespace Samaphp\LaravelBounded\Coverage;
 
 use Samaphp\LaravelBounded\Validators\PhpFileIterator;
 
+/**
+ * Transaction coverage gate.
+ *
+ * **Detection conventions** (greps source for these patterns):
+ *   - `Transaction::run(`            — static facade call
+ *   - `->transaction->run(`          — instance call via property named `$transaction`
+ *
+ * The instance-call pattern requires the property to be named exactly
+ * `$transaction`. If you inject the service as `Transaction $tx` and call
+ * `$this->tx->run(...)`, this gate will miss it. Stick with `$transaction`
+ * as the property name across all services that use the Transaction
+ * service — it's the one undocumented coupling, made explicit here.
+ */
 final class TransactionCoverageGate
 {
     public function check(string $appPath, string $cloverReportPath): TransactionCoverageResult

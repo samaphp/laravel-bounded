@@ -44,9 +44,8 @@ return [
     ],
     'ignore' => [
         'paths' => [
-            // 'app/Jobs', // suppress NoListeners/TestParity for projects that don't use queues
+            // 'app/Jobs', // suppress validators for projects that don't use queues
         ],
-        'classes' => [],
     ],
 ];
 ```
@@ -60,7 +59,7 @@ php artisan make:action  Order/Show          # → app/Http/Controllers/Order/Sh
 php artisan make:service Order/CreateOrder   # → app/Services/Order/CreateOrder.php
 php artisan make:repository OrderRepository  # → app/Repositories/OrderRepository.php
 php artisan make:integration Stripe/Gateway  # → app/Integrations/Stripe/Gateway.php
-php artisan make:job Email/SendOrderEmail    # → app/Jobs/Email/SendOrderEmail.php
+php artisan make:bounded-job Email/Send      # → app/Jobs/Email/Send.php  (named with `bounded-` prefix to avoid colliding with Laravel core's make:job)
 ```
 
 ## Validators (artisan)
@@ -118,7 +117,7 @@ cp vendor/samaphp/laravel-bounded/deptrac.yaml deptrac.yaml
 vendor/bin/deptrac analyse
 ```
 
-The shipped config defines 9 layers (Controllers, Middleware, Services, Repositories, Queries, Integrations, Models, Jobs, Providers) with allowed dependencies per the rule chain.
+The shipped config defines 10 layers (Controllers, Commands, Services, Repositories, Queries, Integrations, Models, Jobs, Providers, plus a virtual `Eloquent` layer that restricts ORM imports to Repositories / Queries / Models) with allowed dependencies per the rule chain. Middleware boundaries are enforced by the `bounded.middlewareServiceImport` PHPStan rule, not Deptrac.
 
 ## Transaction service
 
@@ -149,6 +148,8 @@ php artisan arch:coverage:transactions
 ```
 
 The gate scans `app/` for `Transaction::run` call sites, parses the Clover report, and asserts non-zero coverage on every call site. Fails with the list of uncovered lines if any. Requires `pcov` (recommended) or `xdebug` to generate the coverage report.
+
+**Detection convention.** The gate matches two source patterns: `Transaction::run(` (static) and `->transaction->run(` (instance via property). The instance pattern requires the property to be named exactly `$transaction` — if you inject the service as `Transaction $tx` and call `$this->tx->run(...)`, the gate will miss it. Stick with `$transaction` as the property name.
 
 ## Validators reference
 

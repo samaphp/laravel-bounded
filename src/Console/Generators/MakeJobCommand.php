@@ -8,7 +8,10 @@ use Illuminate\Console\GeneratorCommand;
 
 final class MakeJobCommand extends GeneratorCommand
 {
-    protected $name = 'make:job';
+    // Renamed from `make:job` to avoid silently overriding Laravel's core
+    // `make:job` command. Other Bounded generators (action/service/repository/
+    // integration) don't collide with core; only this one needed the prefix.
+    protected $name = 'make:bounded-job';
 
     protected $description = 'Create a new queued job (Bounded layout: app/Jobs/{Domain}/{Name} — thin transport, delegate to a service)';
 

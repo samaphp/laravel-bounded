@@ -33,8 +33,8 @@ it('make:integration is registered', function () {
     expect(\Illuminate\Support\Facades\Artisan::all())->toHaveKey('make:integration');
 });
 
-it('make:job is registered', function () {
-    expect(\Illuminate\Support\Facades\Artisan::all())->toHaveKey('make:job');
+it('make:bounded-job is registered', function () {
+    expect(\Illuminate\Support\Facades\Artisan::all())->toHaveKey('make:bounded-job');
 });
 
 it('make:action creates a final invokable controller in app/Http/Controllers', function () {
@@ -95,12 +95,12 @@ it('make:integration creates a final integration with vendor namespace', functio
         ->toContain('final class ');
 });
 
-it('make:job creates a final queueable job in app/Jobs', function () {
+it('make:bounded-job creates a final queueable job in app/Jobs', function () {
     $name = 'TestJobGen' . uniqid();
     $expected = $this->app->basePath('app/Jobs/' . $name . '.php');
     $this->createdFiles[] = $expected;
 
-    $this->artisan('make:job', ['name' => $name])->assertExitCode(0);
+    $this->artisan('make:bounded-job', ['name' => $name])->assertExitCode(0);
 
     expect(is_file($expected))->toBeTrue();
     $contents = file_get_contents($expected);

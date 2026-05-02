@@ -48,7 +48,12 @@ final class NoRequestInServiceSignaturesRule implements Rule
             }
 
             $typeStr = $this->normalizeType($param->type);
-            if ($typeStr === 'Illuminate\\Http\\Request' || str_ends_with($typeStr, '\\Request') || $typeStr === 'Request') {
+            // Match the framework's Request only — exact FQN, or the bare
+            // `Request` symbol (resolves via `use Illuminate\Http\Request`).
+            // Do NOT suffix-match `\\Request` because legitimate DTOs named
+            // `CreateOrderRequest`, `RegisterUserRequest`, etc. would
+            // false-positive — those *are* the recommended pattern.
+            if ($typeStr === 'Illuminate\\Http\\Request' || $typeStr === 'Request') {
                 $errors[] = RuleErrorBuilder::message(sprintf(
                     'Method [%s::%s] accepts an HTTP Request parameter — services must receive validated DTOs only. Move the Request handling into the controller and pass a typed DTO.',
                     $this->classNameForScope($scope),

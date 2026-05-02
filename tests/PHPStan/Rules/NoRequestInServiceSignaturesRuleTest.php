@@ -33,4 +33,13 @@ final class NoRequestInServiceSignaturesRuleTest extends RuleTestCase
     {
         $this->analyse([__DIR__ . '/data/app/Services/Order/DtoParamService.php'], []);
     }
+
+    public function testAllowsDtoNamedWithRequestSuffix(): void
+    {
+        // Regression: rule used to suffix-match `\Request`, false-positiving
+        // on legitimate DTOs named `CreateOrderRequest`, `RegisterUserRequest`,
+        // etc. — which is exactly the recommended Form-Request-style DTO
+        // pattern. The fixture must analyse with zero violations.
+        $this->analyse([__DIR__ . '/data/app/Services/Order/RequestSuffixDtoService.php'], []);
+    }
 }

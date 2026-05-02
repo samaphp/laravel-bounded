@@ -6,6 +6,17 @@ namespace Samaphp\LaravelBounded\PHPStan\Helpers;
 
 final class ZoneClassifier
 {
+    /**
+     * Default zone definitions used by PHPStan rules.
+     *
+     * **MUST mirror `config/bounded.php`'s `zones` block.** PHPStan runs
+     * without booting Laravel, so it can't read the consumer's config at
+     * analysis time. The duplication is mechanically necessary — change
+     * one, change the other, or rules drift silently from validators.
+     *
+     * Consumers with custom zones can configure ZoneClassifier via PHPStan
+     * service definition (autowired by extension.neon).
+     */
     public const DEFAULT_ZONES = [
         'logic' => [
             'app/Http/Controllers',

@@ -1,3 +1,13 @@
+# laravel-bounded ships this Deptrac config as a starter template.
+#
+# - Layer-level boundaries (Controllers → Services etc.) are enforced here.
+# - The `Eloquent` layer restricts ORM imports to Repositories / Queries /
+#   Models — the package's headline persistence boundary.
+# - Middleware-import boundaries are enforced by the package's PHPStan rule
+#   (`bounded.middlewareServiceImport`), not here, so Middleware is intentionally
+#   not a Deptrac layer — keeping it out avoids blocking legitimate framework
+#   imports while leaving the rule that matters in place.
+
 deptrac:
     paths:
         - ./app
@@ -11,11 +21,11 @@ deptrac:
                     value: app/Http/Controllers/.*
 
         -
-            name: Middleware
+            name: Commands
             collectors:
                 -
                     type: directory
-                    value: app/Http/Middleware/.*
+                    value: app/Console/Commands/.*
 
         -
             name: Services
@@ -66,10 +76,22 @@ deptrac:
                     type: directory
                     value: app/Providers/.*
 
+        -
+            name: Eloquent
+            collectors:
+                -
+                    type: classlike
+                    value: ^Illuminate\\Database\\Eloquent\\.*$
+
     ruleset:
         Controllers:
             - Services
             - Models
+            - Jobs
+        Commands:
+            - Services
+            - Models
+            - Jobs
         Services:
             - Repositories
             - Queries
@@ -78,15 +100,18 @@ deptrac:
             - Jobs
         Repositories:
             - Models
+            - Eloquent
         Queries:
             - Models
+            - Eloquent
         Integrations:
             - Models
         Jobs:
             - Services
             - Models
-        Middleware: ~
-        Models: ~
+        Models:
+            - Eloquent
         Providers: ~
+        Eloquent: ~
 
     skip_violations: ~
