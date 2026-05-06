@@ -84,7 +84,7 @@ return [
     ],
     'ignore' => [
         'paths' => [
-            // 'app/Jobs', // suppress validators for projects that don't use queues
+            // 'app/Jobs', // skip all bounded checks for this category (e.g. mid-migration)
         ],
     ],
 ];
@@ -108,10 +108,10 @@ php artisan make:bounded-job Email/Send          # → app/Jobs/Email/Send.php  
 
 ```bash
 php artisan arch:validate              # run all validators, respect ignore.paths
-php artisan arch:validate --strict     # bypass ignore.paths for code violations; structural problems (ScanPathMissing/ScanPathEmpty) still respect ignore.paths
+php artisan arch:validate --strict     # bypass ignore.paths for file-level violations
 ```
 
-`ignore.paths` declares "this category isn't applicable to my project." That declaration holds in strict mode. Strict only bypasses ignore for **file-level violations** — so a path can't be used to permanently silence broken code.
+`ignore.paths` declares "this category isn't applicable to my project." That declaration holds in strict mode for *structural* problems (`ScanPathMissing` / `ScanPathEmpty` from `PathScanningValidator` subclasses like `SingleActionController`). Strict only bypasses ignore for **file-level violations** — so a path can't be used to permanently silence broken code.
 
 ## Full check chain
 
