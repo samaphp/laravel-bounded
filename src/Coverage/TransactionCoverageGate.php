@@ -89,7 +89,14 @@ final class TransactionCoverageGate
         }
 
         $result = [];
-        foreach ($xml->project->file ?? [] as $file) {
+        $files = array_merge(
+            iterator_to_array($xml->project->file ?? new \SimpleXMLElement('<r/>'), false),
+            ...array_map(
+                static fn ($pkg) => iterator_to_array($pkg->file ?? new \SimpleXMLElement('<r/>'), false),
+                iterator_to_array($xml->project->package ?? new \SimpleXMLElement('<r/>'), false),
+            ),
+        );
+        foreach ($files as $file) {
             $filePath = (string) $file['name'];
             foreach ($file->line ?? [] as $line) {
                 if ((string) $line['type'] !== 'stmt') {
