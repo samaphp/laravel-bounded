@@ -6,7 +6,7 @@ namespace Samaphp\LaravelBounded\Console;
 
 use Illuminate\Console\Command;
 use Samaphp\LaravelBounded\BoundedServiceProvider;
-use Samaphp\LaravelBounded\Validators\PathScanningValidator;
+use Samaphp\LaravelBounded\Validators\SupportsStrictMode;
 use Samaphp\LaravelBounded\Validators\ValidatorInterface;
 use Samaphp\LaravelBounded\Validators\ValidatorResult;
 
@@ -24,7 +24,7 @@ final class ArchValidateCommand extends Command
 
         if ($this->option('strict')) {
             foreach ($validators as $validator) {
-                if ($validator instanceof PathScanningValidator) {
+                if ($validator instanceof SupportsStrictMode) {
                     $validator->setStrict(true);
                 }
             }

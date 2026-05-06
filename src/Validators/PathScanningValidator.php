@@ -6,7 +6,7 @@ namespace Samaphp\LaravelBounded\Validators;
 
 use LogicException;
 
-abstract class PathScanningValidator implements ValidatorInterface
+abstract class PathScanningValidator implements ValidatorInterface, SupportsStrictMode
 {
     private bool $strict = false;
 
